@@ -45,6 +45,10 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
 .engine-card{display:flex;gap:10px;align-items:center;padding:12px;border:1px solid #31e7a422;border-radius:11px;background:linear-gradient(135deg,#071b19,#07121a)}.engine-icon{width:36px;height:36px;display:grid;place-items:center;border-radius:10px;border:1px solid #31e7a455;color:#31e7a4;font-size:18px}.engine-card b,.engine-card span{display:block}.engine-card b{font-size:10px;color:#fff}.engine-card span{font-size:8px;color:#789b98;margin-top:3px}.online-hero{padding:16px;border:1px solid #39dcff3d;border-radius:13px;background:radial-gradient(circle at 90% 0,#39dcff18,transparent 45%),linear-gradient(135deg,#092237,#07111c)}.online-badge{display:inline-block;font-size:7px;letter-spacing:1.5px;color:#31e7a4;border:1px solid #31e7a455;border-radius:999px;padding:4px 7px;margin-bottom:9px}.online-hero b{display:block;font-size:16px;letter-spacing:1px}.online-hero span{display:block;color:#89a6b8;font-size:8px;line-height:1.55;margin-top:5px}.ai-progress{height:5px;border-radius:99px;background:#08121b;border:1px solid #ffffff0b;overflow:hidden;margin-top:2px}.ai-progress-bar{height:100%;width:0;background:linear-gradient(90deg,#39dcff,#31e7a4);transition:width .25s}.ai-status{font-size:8px;color:#8aa3b3;min-height:12px}.quick-row button.hot{background:linear-gradient(135deg,#087fa9,#1475e9);color:#fff}
 @media(max-width:820px){.topbar{min-height:58px}.brand-mark{width:32px;height:32px}.brand strong{font-size:11px}.top-actions .ghost-btn:not(:first-child){display:none}.head-note{display:none}.editor-layout{grid-template-columns:1fr;grid-template-rows:minmax(260px,1fr) minmax(245px,44%);padding:6px}.control-card{min-height:0}.section-head{padding:8px 10px}.section-head h1{font-size:15px}.stage-toolbar{height:30px}.dropzone{min-height:180px}.tool-tabs{padding-bottom:6px}}
 @media(max-width:500px){.net-badge small{display:none}.top-actions{gap:4px}.modebar{padding:6px}.mode-btn{padding:9px 5px;font-size:8px}.editor-layout{grid-template-rows:minmax(230px,1fr) minmax(250px,46%)}.panel-scroll{padding:8px}.export-bar{padding:7px}.brand span{display:none}}
+
+/* ===== V10 PHOTO LAB ENHANCEMENTS ===== */
+.feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.feature-grid button{border:1px solid #ffffff0d;background:#091521;color:#9db4c4;border-radius:8px;padding:10px 7px;font-size:8px;font-weight:900}.feature-grid button.active,.feature-grid button:hover{border-color:#39dcff55;color:#fff;background:#0d3150}.stat-card{padding:13px;border:1px solid #39dcff22;border-radius:12px;background:linear-gradient(135deg,#071b2a,#07111c)}.stat-card b,.stat-card span{display:block}.stat-card b{font-size:12px;color:#fff}.stat-card span{font-size:8px;line-height:1.6;color:#7fa0b6;margin-top:5px}.download-stack{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:2px}.download-stack button{min-height:38px}.tool-divider{height:1px;background:#ffffff0b;margin:2px 0}.text-style-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}.text-style-row button{border:1px solid #ffffff0d;background:#091521;color:#bfeaff;border-radius:8px;padding:9px;font-size:8px;font-weight:900}.text-style-row button.active{border-color:#39dcff55;background:#0d3150;color:#fff}.feature-note{font-size:8px;color:#6f899e;line-height:1.5}.analytics-link{display:block;text-align:center;margin-top:6px;color:#39dcff;font-size:8px;text-decoration:none}.analytics-link:hover{text-decoration:underline}
+@media(max-width:500px){.feature-grid{grid-template-columns:1fr 1fr}.download-stack{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
@@ -61,7 +65,7 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
     <div class="top-actions">
       <div class="net-badge" id="netBadge">● CHECKING <small>SYSTEM</small></div>
       <button class="ghost-btn" id="installAppBtn" hidden onclick="installHub()">＋ INSTALL APP</button>
-      <button class="ghost-btn" onclick="toggleFullscreen()">⛶ FULLSCREEN</button>
+      <button class="ghost-btn" onclick="toggleStatsModal()">📊 STATS</button><button class="ghost-btn" onclick="toggleFullscreen()">⛶ FULLSCREEN</button>
       <a class="ghost-btn" href="index.html" onclick="triggerPageTransition(event,'index.html')">← HUB</a>
     </div>
   </header>
@@ -107,12 +111,17 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
               <label>Saturation <output id="vSat">100%</output><input id="pSat" type="range" min="0" max="200" value="100"></label>
               <label>Contrast <output id="vCont">100%</output><input id="pCont" type="range" min="0" max="200" value="100"></label>
               <label>Temperature <output id="vTemp">0</output><input id="pTemp" type="range" min="-100" max="100" value="0"></label>
+              <label>Exposure <output id="vExposure">0</output><input id="pExposure" type="range" min="-80" max="80" value="0"></label>
+              <label>Fade <output id="vFade">0%</output><input id="pFade" type="range" min="0" max="60" value="0"></label>
+              <label>Grain <output id="vGrain">0%</output><input id="pGrain" type="range" min="0" max="35" value="0"></label>
             </div>
             <div id="pPanelEff" class="tool-panel" style="display:none">
               <label>Hue <output id="vHue">0°</output><input id="pHue" type="range" min="-180" max="180" value="0"></label>
               <label>Blur <output id="vBlur">0px</output><input id="pBlur" type="range" min="0" max="12" value="0"></label>
               <label>Invert <output id="vInvert">0%</output><input id="pInvert" type="range" min="0" max="100" value="0"></label>
               <label>Vignette <output id="vVignette">0%</output><input id="pVignette" type="range" min="0" max="100" value="0"></label>
+              <label>Pixelate <output id="vPixelate">0</output><input id="pPixelate" type="range" min="0" max="18" value="0"></label>
+              <div class="feature-grid"><button onclick="pQuickEffect('duotone')">◐ DUOTONE</button><button onclick="pQuickEffect('soft')">☁ SOFT</button><button onclick="pQuickEffect('noir')">◼ NOIR</button><button onclick="pQuickEffect('glow')">✦ GLOW</button></div>
               <button class="mini-btn" onclick="pEnhanceHD()">💎 ENHANCE / SHARPEN OFFLINE</button>
             </div>
             <div id="pPanelFilt" class="tool-panel" style="display:none">
@@ -120,6 +129,9 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
                 <button onclick="pApplyPreset('normal')">✨ NORMAL</button><button onclick="pApplyPreset('cyberpunk')">⚡ CYBERPUNK</button>
                 <button onclick="pApplyPreset('grayscale')">🏛 MONO</button><button onclick="pApplyPreset('vintage')">📜 VINTAGE</button>
                 <button onclick="pApplyPreset('matcha')">🍵 MATCHA</button><button onclick="pApplyPreset('sakura')">🌸 SAKURA</button>
+                <button onclick="pApplyPreset('sunset')">🌅 SUNSET</button><button onclick="pApplyPreset('ocean')">🌊 OCEAN</button>
+                <button onclick="pApplyPreset('film')">🎞 FILM</button><button onclick="pApplyPreset('dreamy')">☁ DREAMY</button>
+                <button onclick="pApplyPreset('emerald')">💚 EMERALD</button><button onclick="pApplyPreset('fire')">🔥 FIRE</button>
               </div>
             </div>
             <div id="pPanelWm" class="tool-panel" style="display:none">
@@ -127,6 +139,9 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
               <div class="quick-row"><span id="previewDotWm" style="width:24px;height:24px;border-radius:50%;background:#fff;border:2px solid #fff;display:block"></span><button onclick="toggleModal('modalFont',true)">🔤 FONT</button><button onclick="toggleModal('modalPattern',true)">🔲 POLA</button><button onclick="openColorModal('watermark')">🎨 WARNA</button></div>
               <label>Size <output id="vWmSize">35</output><input id="pWmSize" type="range" min="10" max="100" value="35"></label>
               <label>Opacity <output id="vWmAlpha">90%</output><input id="pWmAlpha" type="range" min="10" max="100" value="90"></label>
+              <div class="text-style-row"><button id="wmBoldBtn" class="active" onclick="pToggleTextStyle('bold')">B BOLD</button><button id="wmItalicBtn" onclick="pToggleTextStyle('italic')"><i>I ITALIC</i></button></div>
+              <label>Outline <output id="vWmStroke">0</output><input id="pWmStroke" type="range" min="0" max="12" value="0"></label>
+              <label>Letter Space <output id="vWmSpacing">0</output><input id="pWmSpacing" type="range" min="0" max="12" value="0"></label>
               <div id="rowWmY"><label>Position Y <output id="vWmY">90%</output><input id="pWmY" type="range" min="5" max="95" value="90"></label></div>
             </div>
             <div id="pPanelTrans" class="tool-panel" style="display:none">
@@ -187,6 +202,7 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
               <div class="ai-status" id="aiStatus">Siap memproses foto.</div>
               <div class="quick-row"><button onclick="eRunRealAI('preview')">⚡ FAST</button><button class="hot" onclick="eRunRealAI('quality')">✦ QUALITY</button></div>
               <button id="btnRunAI" class="accent-btn hot wide" onclick="eRunRealAI('quality')">✂ REMOVE BACKGROUND ONLINE</button>
+              <div id="aiDownloadBox" class="download-stack" style="display:none"><button class="accent-btn" onclick="eDownload(false)">↓ DOWNLOAD PNG</button><button class="accent-btn hot" onclick="eDownload(true)">✦ DOWNLOAD HD</button></div>
               <p class="hint">Foto dikirim aman ke backend Netlify lalu diproses oleh Remove.bg. API key tidak disimpan di halaman ini.</p>
             </div>
             <div id="ePanelColor" class="tool-panel" style="display:none">
@@ -233,6 +249,13 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
   <button id="mFont_monospace" class="modal-item-btn" onclick="selectModalFont('monospace','Cyber Mono')">Cyber / Monospace ✓</button>
   <button id="mFont_Courier New" class="modal-item-btn" onclick="selectModalFont('Courier New','Typewriter')">Retro / Mesin Ketik ✓</button>
   <button id="mFont_Georgia" class="modal-item-btn" onclick="selectModalFont('Georgia','Editorial')">Editorial / Majalah ✓</button>
+  <button id="mFont_Arial Black" class="modal-item-btn" onclick="selectModalFont('Arial Black','Poster Black')">Poster / Arial Black ✓</button>
+  <button id="mFont_Trebuchet MS" class="modal-item-btn" onclick="selectModalFont('Trebuchet MS','Friendly')">Friendly / Trebuchet ✓</button>
+  <button id="mFont_Verdana" class="modal-item-btn" onclick="selectModalFont('Verdana','Clean')">Clean / Verdana ✓</button>
+  <button id="mFont_Times New Roman" class="modal-item-btn" onclick="selectModalFont('Times New Roman','Classic Book')">Classic Book / Times ✓</button>
+  <button id="mFont_Arial Narrow" class="modal-item-btn" onclick="selectModalFont('Arial Narrow','Narrow Tech')">Narrow Tech ✓</button>
+  <button id="mFont_Comic Sans MS" class="modal-item-btn" onclick="selectModalFont('Comic Sans MS','Casual')">Casual / Comic ✓</button>
+  <button id="mFont_Brush Script MT" class="modal-item-btn" onclick="selectModalFont('Brush Script MT','Brush Script')">Brush Script / Signature ✓</button>
   <button class="ghost-btn" onclick="toggleModal('modalFont',false)">TUTUP</button>
 </div></div>
 <div class="modal" id="modalPattern"><div class="modal-card"><h3>POLA WATERMARK</h3>
@@ -240,6 +263,7 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
   <button id="mPattern_overlay" class="modal-item-btn" onclick="selectModalPattern('overlay','Overlay Diagonal')">Penuh / Overlay Diagonal ✓</button>
   <button class="ghost-btn" onclick="toggleModal('modalPattern',false)">TUTUP</button>
 </div></div>
+<div class="modal" id="modalStats"><div class="modal-card"><h3>📊 VISITOR STATS</h3><div class="stat-card"><b>Netlify Web Analytics</b><span>Untuk jumlah pengunjung yang benar-benar memakai website, gunakan statistik server-side Netlify. Data ini bisa menampilkan <b>Pageviews</b>, <b>Unique visitors</b>, lokasi, halaman populer, sumber traffic, dan bandwidth.</span></div><p class="feature-note">Catatan: angka pengunjung tidak bisa dihitung akurat hanya dari HTML/localStorage. Netlify Analytics menghitungnya dari traffic server.</p><a class="analytics-link" href="https://docs.netlify.com/manage/monitoring/web-analytics/overview/" target="_blank" rel="noopener">BACA CARA AKTIFKAN NETLIFY ANALYTICS ↗</a><button class="ghost-btn" onclick="toggleStatsModal(false)">TUTUP</button></div></div>
 <div class="modal" id="modalColor"><div class="modal-card color-modal"><h3 id="colorModalTitle">PILIH WARNA</h3><div class="color-wheel-wrap"><canvas id="colorWheelCanvas" width="280" height="280"></canvas></div><div class="color-preview"><span id="colorPreviewCircle"></span><b id="colorHexText">#00ff00</b></div><button onclick="activeEyedropperMode()" class="accent-btn wide">🎯 AMBIL DARI FOTO</button><button class="ghost-btn" onclick="toggleModal('modalColor',false)">SELESAI / TUTUP</button></div></div>
 
 <input id="filePhoto" type="file" accept="image/*" hidden>
@@ -258,6 +282,8 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
             toast.classList.add('show'); clearTimeout(toastTimeout);
             if(type !== 'loading') toastTimeout = setTimeout(() => { toast.classList.remove('show'); }, 3000);
         }
+
+        function toggleStatsModal(show=true){ const m=document.getElementById('modalStats'); if(m) m.classList.toggle('active',show); }
 
         function toggleModal(modalId, show) {
             const modal = document.getElementById(modalId);
@@ -372,7 +398,7 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
         // PHOTO EDITOR
         const filePhoto = document.getElementById('filePhoto'), canvasPhoto = document.getElementById('canvasPhoto'), ctxPhoto = canvasPhoto.getContext('2d');
         let imgPhotoOriginal = null, imgPhotoTrueOriginal = null;
-        let pSettings = { bright: 100, sat: 100, cont: 100, temp: 0, blur: 0, rot: 0, flipH: 1, flipV: 1, bw: 0, sepia: 0, hue: 0, invert: 0, vignette: 0, wmText: '', wmType: 'normal', wmFont: 'sans-serif', wmColor: '#ffffff', wmSize: 35, wmAlpha: 90, wmY: 90 };
+        let pSettings = { bright: 100, sat: 100, cont: 100, temp: 0, exposure: 0, fade: 0, grain: 0, blur: 0, pixelate: 0, rot: 0, flipH: 1, flipV: 1, bw: 0, sepia: 0, hue: 0, invert: 0, vignette: 0, wmText: '', wmType: 'normal', wmFont: 'sans-serif', wmColor: '#ffffff', wmSize: 35, wmAlpha: 90, wmY: 90, wmStroke: 0, wmSpacing: 0, wmBold: true, wmItalic: false };
 
         function pSwitchSub(sub) {
             ['Adj', 'Eff', 'Filt', 'Wm', 'Trans'].forEach(s => {
@@ -381,11 +407,11 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
             });
         }
 
-        ['pBright', 'pSat', 'pCont', 'pTemp', 'pBlur', 'pHue', 'pInvert', 'pVignette', 'pWmSize', 'pWmY', 'pWmAlpha'].forEach(id => {
+        ['pBright', 'pSat', 'pCont', 'pTemp', 'pExposure', 'pFade', 'pGrain', 'pBlur', 'pPixelate', 'pHue', 'pInvert', 'pVignette', 'pWmSize', 'pWmY', 'pWmAlpha', 'pWmStroke', 'pWmSpacing'].forEach(id => {
             document.getElementById(id).addEventListener('input', (e) => {
-                const actualKey = id === 'pTemp' ? 'temp' : id === 'pVignette' ? 'vignette' : id === 'pWmSize' ? 'wmSize' : id === 'pWmY' ? 'wmY' : id === 'pWmAlpha' ? 'wmAlpha' : id.substring(1).toLowerCase();
+                const actualKey = id === 'pTemp' ? 'temp' : id === 'pVignette' ? 'vignette' : id === 'pWmSize' ? 'wmSize' : id === 'pWmY' ? 'wmY' : id === 'pWmAlpha' ? 'wmAlpha' : id === 'pWmStroke' ? 'wmStroke' : id === 'pWmSpacing' ? 'wmSpacing' : id.substring(1).toLowerCase();
                 pSettings[actualKey] = e.target.value;
-                document.getElementById('v' + id.substring(1)).innerText = e.target.value + (id.includes('WmY')||id.includes('Vignette')||id.includes('Alpha') ? '%' : (id.includes('Blur') ? 'px' : (id.includes('Hue') ? '°' : (id.includes('WmSize')||id.includes('Temp') ? '' : '%'))));
+                document.getElementById('v' + id.substring(1)).innerText = e.target.value + (id.includes('WmY')||id.includes('Vignette')||id.includes('Alpha')||id.includes('Fade')||id.includes('Grain') ? '%' : (id.includes('Blur') ? 'px' : (id.includes('Hue') ? '°' : '')));
                 renderPhoto();
             });
         });
@@ -479,8 +505,14 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
             targetCtx.clearRect(0, 0, targetC.width, targetC.height); targetCtx.save();
             targetCtx.imageSmoothingEnabled = true; targetCtx.translate(targetC.width / 2, targetC.height / 2);
             targetCtx.rotate((rot * Math.PI) / 180); targetCtx.scale(pSettings.flipH * scale, pSettings.flipV * scale);
-            targetCtx.filter = `brightness(${pSettings.bright}%) saturate(${pSettings.sat}%) contrast(${pSettings.cont}%) blur(${pSettings.blur * scale}px) grayscale(${pSettings.bw}%) sepia(${pSettings.sepia}%) hue-rotate(${pSettings.hue}deg) invert(${pSettings.invert}%)`;
-            targetCtx.drawImage(imgPhotoOriginal, -imgPhotoOriginal.width / 2, -imgPhotoOriginal.height / 2);
+            const effectiveBright = Math.max(0, Math.min(300, Number(pSettings.bright) + Number(pSettings.exposure) * 1.35));
+            targetCtx.filter = `brightness(${effectiveBright}%) saturate(${pSettings.sat}%) contrast(${pSettings.cont}%) blur(${pSettings.blur * scale}px) grayscale(${pSettings.bw}%) sepia(${pSettings.sepia}%) hue-rotate(${pSettings.hue}deg) invert(${pSettings.invert}%)`;
+            if(Number(pSettings.pixelate)>0 && scale===1){
+                const px=Math.max(2,Math.round(Number(pSettings.pixelate)+1));
+                const pw=Math.max(1,Math.ceil(imgPhotoOriginal.width/px)), ph=Math.max(1,Math.ceil(imgPhotoOriginal.height/px));
+                const pc=document.createElement('canvas'); pc.width=pw; pc.height=ph; const pctx=pc.getContext('2d'); pctx.imageSmoothingEnabled=false; pctx.filter=targetCtx.filter; pctx.drawImage(imgPhotoOriginal,0,0,pw,ph);
+                targetCtx.filter='none'; targetCtx.imageSmoothingEnabled=false; targetCtx.drawImage(pc,-imgPhotoOriginal.width/2,-imgPhotoOriginal.height/2,imgPhotoOriginal.width,imgPhotoOriginal.height); targetCtx.imageSmoothingEnabled=true;
+            } else { targetCtx.drawImage(imgPhotoOriginal, -imgPhotoOriginal.width / 2, -imgPhotoOriginal.height / 2); }
             targetCtx.restore();
 
             if(pSettings.temp != 0) {
@@ -488,6 +520,16 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
                 if(pSettings.temp > 0) targetCtx.fillStyle = `rgba(255, 136, 0, ${pSettings.temp / 250})`;
                 else targetCtx.fillStyle = `rgba(0, 136, 255, ${Math.abs(pSettings.temp) / 250})`;
                 targetCtx.fillRect(0, 0, targetC.width, targetC.height); targetCtx.restore();
+            }
+
+            if(pSettings.fade > 0) {
+                targetCtx.save(); targetCtx.fillStyle=`rgba(255,255,255,${Number(pSettings.fade)/180})`; targetCtx.fillRect(0,0,targetC.width,targetC.height); targetCtx.restore();
+            }
+            if(pSettings.grain > 0) {
+                targetCtx.save(); targetCtx.globalAlpha=Number(pSettings.grain)/180; targetCtx.fillStyle='#fff';
+                const step=Math.max(3,Math.round(7-Number(pSettings.grain)/8));
+                for(let y=0;y<targetC.height;y+=step){ for(let x=0;x<targetC.width;x+=step){ if(((x*13+y*17)%31)<Number(pSettings.grain)/2) targetCtx.fillRect(x,y,1,1); }}
+                targetCtx.restore();
             }
 
             if(pSettings.vignette > 0) {
@@ -500,8 +542,9 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
             if(pSettings.wmText.trim() !== "") {
                 targetCtx.save(); 
                 const fSize = pSettings.wmSize * scale;
-                targetCtx.font = `bold ${fSize}px ${pSettings.wmFont}`;
-                targetCtx.fillStyle = pSettings.wmColor; 
+                targetCtx.font = `${pSettings.wmItalic ? 'italic ' : ''}${pSettings.wmBold ? 'bold ' : ''}${fSize}px ${pSettings.wmFont}`;
+                targetCtx.fillStyle = pSettings.wmColor;
+                targetCtx.strokeStyle = '#000'; targetCtx.lineWidth = Number(pSettings.wmStroke||0) * scale; 
                 targetCtx.globalAlpha = pSettings.wmAlpha / 100;
                 
                 if(pSettings.wmType === 'overlay') {
@@ -517,7 +560,7 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
                     targetCtx.textAlign = "center"; targetCtx.textBaseline = "middle";
                     targetCtx.shadowColor = "rgba(0,0,0,0.8)"; targetCtx.shadowBlur = 6 * scale;
                     targetCtx.shadowOffsetX = 2 * scale; targetCtx.shadowOffsetY = 2 * scale;
-                    targetCtx.fillText(pSettings.wmText, targetC.width / 2, (targetC.height * pSettings.wmY) / 100);
+                    const wmX=targetC.width/2, wmY=(targetC.height*pSettings.wmY)/100; if(Number(pSettings.wmStroke)>0) targetCtx.strokeText(pSettings.wmText,wmX,wmY); targetCtx.fillText(pSettings.wmText, wmX, wmY);
                 }
                 targetCtx.restore();
             }
@@ -526,6 +569,18 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
         function pRotate(deg) { pSettings.rot = (pSettings.rot + deg + 360) % 360; renderPhoto(); }
         function pFlip(axis) { if(axis === 'h') pSettings.flipH *= -1; if(axis === 'v') pSettings.flipV *= -1; renderPhoto(); }
         
+        function pToggleTextStyle(kind){
+            if(kind==='bold'){pSettings.wmBold=!pSettings.wmBold;document.getElementById('wmBoldBtn')?.classList.toggle('active',pSettings.wmBold);}
+            if(kind==='italic'){pSettings.wmItalic=!pSettings.wmItalic;document.getElementById('wmItalicBtn')?.classList.toggle('active',pSettings.wmItalic);}
+            renderPhoto();
+        }
+        function pQuickEffect(type){
+            if(type==='duotone'){pSettings.sat=135;pSettings.cont=125;pSettings.hue=190;pSettings.bw=15;}
+            if(type==='soft'){pSettings.bright=108;pSettings.cont=92;pSettings.sat=92;pSettings.blur=1.2;}
+            if(type==='noir'){pSettings.bw=100;pSettings.cont=135;pSettings.sat=0;pSettings.vignette=35;}
+            if(type==='glow'){pSettings.bright=112;pSettings.sat=118;pSettings.cont=108;pSettings.blur=.5;pSettings.fade=4;}
+            renderPhoto();showToast(`Efek ${type.toUpperCase()} diterapkan!`,'success');
+        }
         function pApplyPreset(type) {
             pSettings.bw = 0; pSettings.sepia = 0; pSettings.hue = 0; pSettings.sat = 100; pSettings.cont = 100; pSettings.invert = 0; pSettings.bright = 100; pSettings.temp = 0; pSettings.vignette = 0;
             if(type === 'cyberpunk') { pSettings.hue = 200; pSettings.sat = 160; pSettings.cont = 120; pSettings.vignette = 30; }
@@ -533,8 +588,14 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
             else if(type === 'vintage') { pSettings.sepia = 80; pSettings.cont = 95; pSettings.bright = 105; pSettings.vignette = 40; }
             else if(type === 'matcha') { pSettings.hue = 90; pSettings.sat = 70; pSettings.cont = 110; }
             else if(type === 'sakura') { pSettings.hue = 340; pSettings.sat = 130; pSettings.bright = 110; pSettings.temp = 20; }
+            else if(type === 'sunset') { pSettings.hue = 15; pSettings.sat = 145; pSettings.cont = 115; pSettings.bright = 108; pSettings.temp = 35; }
+            else if(type === 'ocean') { pSettings.hue = 190; pSettings.sat = 125; pSettings.cont = 115; pSettings.temp = -30; }
+            else if(type === 'film') { pSettings.sat = 88; pSettings.cont = 108; pSettings.bright = 104; pSettings.sepia = 18; pSettings.grain = 8; pSettings.fade = 5; }
+            else if(type === 'dreamy') { pSettings.sat = 88; pSettings.cont = 90; pSettings.bright = 115; pSettings.blur = .7; pSettings.fade = 10; }
+            else if(type === 'emerald') { pSettings.hue = 125; pSettings.sat = 125; pSettings.cont = 115; pSettings.temp = -10; }
+            else if(type === 'fire') { pSettings.hue = 350; pSettings.sat = 155; pSettings.cont = 125; pSettings.bright = 106; pSettings.temp = 45; }
             
-            ['Bright','Sat','Cont','Temp','Hue','Invert','Vignette'].forEach(k => {
+            ['Bright','Sat','Cont','Temp','Exposure','Fade','Grain','Hue','Invert','Vignette','Pixelate','WmStroke','WmSpacing'].forEach(k => {
                 const el = document.getElementById('p'+k);
                 if(el) el.value = pSettings[k.toLowerCase()];
             });
@@ -594,7 +655,7 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
             reader.readAsDataURL(file);
         });
 
-        function eReset() {
+        function eReset() { document.getElementById('aiDownloadBox')?.style.setProperty('display','none');
             if(!imgExcisionOriginal) return;
             canvasExcision.width = imgExcisionOriginal.width; canvasExcision.height = imgExcisionOriginal.height;
             ctxExcision.clearRect(0,0,canvasExcision.width,canvasExcision.height); ctxExcision.drawImage(imgExcisionOriginal, 0, 0); eUpdateBuffer();
@@ -837,7 +898,7 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
         ctxExcision.clearRect(0,0,canvasExcision.width,canvasExcision.height);
         ctxExcision.drawImage(img,0,0,canvasExcision.width,canvasExcision.height);
         URL.revokeObjectURL(url);
-        eUpdateBuffer();window.__dmHasImage=true;set(100,'Selesai — PNG transparan siap di-download.');
+        eUpdateBuffer();window.__dmHasImage=true;set(100,'Selesai — PNG transparan siap di-download.'); document.getElementById('aiDownloadBox')?.style.removeProperty('display');
         showToast('AI Online selesai! Background berhasil dihapus.','success');
       };
       img.onerror=()=>{URL.revokeObjectURL(url);throw new Error('PNG hasil AI tidak dapat dibaca.');};
