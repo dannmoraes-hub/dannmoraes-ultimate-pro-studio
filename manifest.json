@@ -1,0 +1,11 @@
+{
+  "name": "DANNMORAES Ultimate Pro Studio V9",
+  "short_name": "DANNMORAES PRO V9",
+  "start_url": "ultimate-pro-studio.html",
+  "display": "standalone",
+  "background_color": "#03060b",
+  "theme_color": "#03060b",
+  "orientation": "any",
+  "icons": [],
+  "description": "DANNMORAES Ultimate Pro Studio — Photo Lab & Excision BG"
+}
