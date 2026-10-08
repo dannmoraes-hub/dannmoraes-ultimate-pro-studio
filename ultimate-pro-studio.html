@@ -643,12 +643,19 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
             reader.onload = (ev) => {
                 const img = new Image();
                 img.onload = () => {
-                    const MAX = 1000; let w = img.width, h = img.height;
-                    if(w > MAX || h > MAX) { const r = Math.min(MAX/w, MAX/h); w = Math.round(w*r); h = Math.round(h*r); }
-                    const tc = document.createElement('canvas'); tc.width = w; tc.height = h; tc.getContext('2d').drawImage(img, 0, 0, w, h);
+                    // KEEP ORIGINAL PIXEL DIMENSIONS. The previous version resized
+                    // every Remove BG upload to a maximum of 1000px, which caused
+                    // downloaded PNGs to become smaller than the user's original.
                     const safe = new Image();
-                    safe.onload = () => { imgExcisionOriginal = safe; eReset(); document.getElementById('phExcision').style.display = 'none'; canvasExcision.style.display = 'block'; document.getElementById('ctrlExcision').style.display = 'flex'; showToast("Siap potong offline!", "success"); };
-                    safe.src = tc.toDataURL('image/png');
+                    safe.onload = () => {
+                        imgExcisionOriginal = safe;
+                        eReset();
+                        document.getElementById('phExcision').style.display = 'none';
+                        canvasExcision.style.display = 'block';
+                        document.getElementById('ctrlExcision').style.display = 'flex';
+                        showToast(`Siap potong offline! ${safe.naturalWidth}×${safe.naturalHeight}px`, "success");
+                    };
+                    safe.src = ev.target.result;
                 };
                 img.src = ev.target.result;
             };
@@ -789,9 +796,12 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
             if(!imgExcisionOriginal) return;
             showToast("Merender PNG...", "loading");
             setTimeout(() => {
+                // Normal PNG = exact edited canvas dimensions. HD = optional 2× export.
+                // CSS/display size never affects the downloaded pixel dimensions.
                 const ec = document.createElement('canvas'), ecx = ec.getContext('2d'), scale = isHD ? 2 : 1;
                 ec.width = excisionBuffer.width * scale; ec.height = excisionBuffer.height * scale;
-                ecx.imageSmoothingEnabled = true; ecx.drawImage(excisionBuffer, 0, 0);
+                ecx.imageSmoothingEnabled = true;
+                ecx.drawImage(excisionBuffer, 0, 0, ec.width, ec.height);
                 ec.toBlob(b => {
                     const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `DannMoraes_cut_${Date.now()}.png`; a.click(); 
                     showToast("PNG berhasil disimpan! 🎉", "success");
@@ -874,7 +884,7 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
     showToast('Mengunggah foto ke AI Online...','loading');
     try{
       // The editor already keeps images reasonably small for mobile; this also avoids oversized function requests.
-      const source=imgExcisionOriginal.src;
+      const source=imgExcisionOriginal.src; // Original-resolution source; no frontend downscaling.
       set(22,'Mengirim foto ke server aman...');
       const response=await fetch('/.netlify/functions/remove-bg',{
         method:'POST',
