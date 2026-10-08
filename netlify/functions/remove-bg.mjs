@@ -1,108 +1,69 @@
-/**
- * DANNMORAES Ultimate Pro Studio — Netlify Function (ESM)
- * Server-side proxy for Remove.bg.
- * Keep REMOVE_BG_API_KEY in Netlify Environment Variables.
- */
-
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Cache-Control': 'no-store',
-};
-
 export default async (req) => {
-  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+  const headers = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Cache-Control": "no-store"
+  };
 
-  if (req.method !== 'POST') {
-    return json({ error: 'Method tidak diizinkan. Gunakan POST.' }, 405);
-  }
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers });
+  if (req.method !== "POST") return Response.json({ error: "Method tidak diizinkan." }, { status: 405, headers });
 
   const apiKey = process.env.REMOVE_BG_API_KEY;
-  if (!apiKey) {
-    return json({ error: 'REMOVE_BG_API_KEY belum dipasang di Netlify Environment Variables.' }, 500);
-  }
+  if (!apiKey) return Response.json({ error: "REMOVE_BG_API_KEY belum dipasang di Netlify Environment Variables." }, { status: 500, headers });
 
   try {
-    const payload = await req.json();
-    const image = typeof payload?.image === 'string' ? payload.image : '';
-    const size = payload?.size === 'preview' ? 'preview' : 'auto';
+    const body = await req.json();
+    const image = body?.image;
+    const size = body?.size === "preview" ? "preview" : "auto";
+    if (!image || typeof image !== "string") return Response.json({ error: "Data gambar tidak ditemukan." }, { status: 400, headers });
 
-    const match = image.match(/^data:(image\/(?:png|jpeg|jpg|webp));base64,([A-Za-z0-9+/=]+)$/i);
-    if (!match) return json({ error: 'Format gambar tidak didukung. Gunakan PNG, JPG, atau WebP.' }, 400);
+    const match = image.match(/^data:(image\/(?:png|jpeg|jpg|webp));base64,(.+)$/i);
+    if (!match) return Response.json({ error: "Format gambar tidak didukung." }, { status: 400, headers });
 
-    const mime = match[1].toLowerCase() === 'image/jpg' ? 'image/jpeg' : match[1].toLowerCase();
-    const bytes = Buffer.from(match[2], 'base64');
+    const mime = match[1].toLowerCase().replace("image/jpg", "image/jpeg");
+    const binary = Buffer.from(match[2], "base64");
+    if (!binary.length) return Response.json({ error: "Data gambar kosong atau rusak." }, { status: 400, headers });
+    // Keep a safety margin below Netlify's 6 MB buffered request limit.
+    if (binary.length > 4 * 1024 * 1024) return Response.json({ error: "Foto upload terlalu besar. Coba foto dengan ukuran lebih kecil." }, { status: 413, headers });
 
-    // Netlify Functions receive the JSON body as a buffered request. Base64 adds
-    // overhead, so keep the binary image comfortably below the request limit.
-    const MAX_BYTES = 4_200_000;
-    if (bytes.length > MAX_BYTES) {
-      return json({ error: 'Foto masih terlalu besar untuk jalur AI Online. Coba lagi; aplikasi akan mengompres foto otomatis.' }, 413);
-    }
-
-    const ext = mime === 'image/png' ? 'png' : mime === 'image/webp' ? 'webp' : 'jpg';
+    const ext = mime === "image/png" ? "png" : mime === "image/webp" ? "webp" : "jpg";
     const form = new FormData();
-    form.append('image_file', new Blob([bytes], { type: mime }), `dannmoraes.${ext}`);
-    form.append('size', size);
-    // WebP keeps the same pixel dimensions while producing a much smaller
-    // transparent result than PNG. The browser converts it to PNG on download.
-    form.append('format', 'webp');
+    form.append("image_file", new Blob([binary], { type: mime }), `dannmoraes.${ext}`);
+    form.append("size", size);
+    form.append("format", "png");
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60_000);
-
+    const timer = setTimeout(() => controller.abort(), 55000);
     let apiResponse;
     try {
-      apiResponse = await fetch('https://api.remove.bg/v1.0/removebg', {
-        method: 'POST',
-        headers: { 'X-Api-Key': apiKey },
+      apiResponse = await fetch("https://api.remove.bg/v1.0/removebg", {
+        method: "POST",
+        headers: { "X-Api-Key": apiKey },
         body: form,
-        signal: controller.signal,
+        signal: controller.signal
       });
-    } finally {
-      clearTimeout(timeout);
-    }
+    } finally { clearTimeout(timer); }
 
     if (!apiResponse.ok) {
-      const raw = await apiResponse.text();
-      let detail = `Remove.bg mengembalikan HTTP ${apiResponse.status}.`;
+      const text = await apiResponse.text();
+      let detail = `Remove.bg HTTP ${apiResponse.status}`;
       try {
-        const parsed = JSON.parse(raw);
+        const parsed = JSON.parse(text);
         const first = parsed?.errors?.[0];
         detail = first?.title || first?.detail || parsed?.error || detail;
-      } catch (_) {
-        if (raw) detail = raw.slice(0, 700);
-      }
-
-      if (apiResponse.status === 401) detail = 'API key Remove.bg tidak valid atau sudah dicabut.';
-      else if (apiResponse.status === 402) detail = 'Kredit Remove.bg tidak mencukupi.';
-      else if (apiResponse.status === 413) detail = 'Foto terlalu besar untuk diproses Remove.bg.';
-      else if (apiResponse.status === 429) detail = 'Batas penggunaan Remove.bg tercapai. Coba lagi nanti.';
-
-      return json({ error: detail }, apiResponse.status >= 400 && apiResponse.status < 600 ? apiResponse.status : 502);
+      } catch (_) { if (text) detail = text.slice(0, 500); }
+      if (apiResponse.status === 401) detail = "API key Remove.bg tidak valid atau tidak aktif.";
+      if (apiResponse.status === 402) detail = "Kredit Remove.bg tidak mencukupi.";
+      if (apiResponse.status === 413) detail = "Foto terlalu besar untuk Remove.bg.";
+      if (apiResponse.status === 429) detail = "Batas penggunaan Remove.bg tercapai. Coba lagi sebentar.";
+      return Response.json({ error: detail }, { status: apiResponse.status, headers });
     }
 
     const result = await apiResponse.arrayBuffer();
-    return new Response(result, {
-      status: 200,
-      headers: {
-        ...CORS,
-        'Content-Type': 'image/webp',
-        'Cache-Control': 'no-store',
-      },
-    });
+    return new Response(result, { status: 200, headers: { ...headers, "Content-Type": "image/png" } });
   } catch (error) {
-    const message = error?.name === 'AbortError'
-      ? 'Server AI terlalu lama merespons. Coba lagi.'
-      : (error?.message || 'Server gagal memproses gambar.');
-    return json({ error: message }, 500);
+    const msg = error?.name === "AbortError" ? "AI timeout. Coba foto yang lebih kecil atau ulangi." : (error?.message || "Server gagal memproses gambar.");
+    return Response.json({ error: msg }, { status: 500, headers });
   }
 };
-
-function json(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { ...CORS, 'Content-Type': 'application/json; charset=utf-8' },
-  });
-}
