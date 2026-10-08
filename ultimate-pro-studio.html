@@ -643,14 +643,13 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
             reader.onload = (ev) => {
                 const img = new Image();
                 img.onload = () => {
-                    // Keep the original pixel dimensions. CSS may scale the preview,
-                    // but the editing/download canvas must stay at the source resolution.
-                    imgExcisionOriginal = img;
-                    eReset();
-                    document.getElementById('phExcision').style.display = 'none';
-                    canvasExcision.style.display = 'block';
-                    document.getElementById('ctrlExcision').style.display = 'flex';
-                    showToast(`Siap potong offline! ${img.width}×${img.height}px`, "success");
+                    // Keep the editor at the original pixel dimensions. Only the AI upload copy is resized later if needed.
+                    const w = img.width, h = img.height;
+                    const tc = document.createElement('canvas'); tc.width = w; tc.height = h;
+                    tc.getContext('2d').drawImage(img, 0, 0, w, h);
+                    const safe = new Image();
+                    safe.onload = () => { imgExcisionOriginal = safe; eReset(); document.getElementById('phExcision').style.display = 'none'; canvasExcision.style.display = 'block'; document.getElementById('ctrlExcision').style.display = 'flex'; showToast("Siap potong offline!", "success"); };
+                    safe.src = tc.toDataURL('image/png');
                 };
                 img.src = ev.target.result;
             };
@@ -875,27 +874,29 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
     set(8,'Menyiapkan foto...');
     showToast('Mengunggah foto ke AI Online...','loading');
     try{
-      // Keep the editor at the original resolution. Only the transport copy is
-      // compressed to WebP so the JSON request stays below Netlify's payload limit.
-      const makeTransportImage = async () => {
-        const sourceCanvas=document.createElement('canvas');
-        sourceCanvas.width=imgExcisionOriginal.naturalWidth || imgExcisionOriginal.width;
-        sourceCanvas.height=imgExcisionOriginal.naturalHeight || imgExcisionOriginal.height;
-        const sourceCtx=sourceCanvas.getContext('2d',{alpha:true});
-        sourceCtx.drawImage(imgExcisionOriginal,0,0);
-        const qualities=[0.82,0.72,0.62,0.52,0.42];
-        let dataUrl='';
-        for(const q of qualities){
-          dataUrl=sourceCanvas.toDataURL('image/webp',q);
-          if(dataUrl.length <= 5_300_000) break;
-        }
-        // A final JPEG fallback is intentionally avoided because transparency is
-        // irrelevant to the input but WebP is smaller and keeps the same pixels.
-        return dataUrl;
-      };
-      const source=await makeTransportImage();
-      if(!source || source.length > 5_500_000) throw new Error('Foto terlalu besar untuk dikirim ke AI Online. Coba kompres foto sedikit lalu ulangi.');
-      set(22,'Mengirim foto ke server aman...');
+      // The editor already keeps images reasonably small for mobile; this also avoids oversized function requests.
+      // Keep the original image untouched. Netlify buffered functions have a 6 MB request limit,
+      // and JSON/Base64 adds overhead, so create a temporary upload copy only for the AI request.
+      const makeAiUpload = () => new Promise((resolve, reject) => {
+        const MAX_SIDE = 1800;
+        const ow = imgExcisionOriginal.naturalWidth || imgExcisionOriginal.width;
+        const oh = imgExcisionOriginal.naturalHeight || imgExcisionOriginal.height;
+        const scale = Math.min(1, MAX_SIDE / Math.max(ow, oh));
+        const w = Math.max(1, Math.round(ow * scale));
+        const h = Math.max(1, Math.round(oh * scale));
+        const c = document.createElement('canvas'); c.width=w; c.height=h;
+        const cctx=c.getContext('2d',{alpha:false});
+        cctx.drawImage(imgExcisionOriginal,0,0,w,h);
+        c.toBlob(blob => {
+          if(!blob) return reject(new Error('Gagal menyiapkan foto untuk AI.'));
+          const r=new FileReader();
+          r.onload=()=>resolve(String(r.result));
+          r.onerror=()=>reject(new Error('Gagal membaca foto untuk AI.'));
+          r.readAsDataURL(blob);
+        }, 'image/jpeg', 0.82);
+      });
+      const source=await makeAiUpload();
+      set(22,'Mengirim salinan foto ke server aman...');
       const response=await fetch('/.netlify/functions/remove-bg',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
@@ -921,7 +922,7 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
         eUpdateBuffer();window.__dmHasImage=true;set(100,'Selesai — PNG transparan siap di-download.'); document.getElementById('aiDownloadBox')?.style.removeProperty('display');
         showToast('AI Online selesai! Background berhasil dihapus.','success');
       };
-      img.onerror=()=>{URL.revokeObjectURL(url);set(0,'Gagal membaca hasil AI.');showCustomPopup('AI TIDAK SELESAI','<strong>Server mengirim hasil gambar yang tidak dapat dibaca.</strong><br><br>Coba lagi atau gunakan <b>SMART EDGE</b>.',{okText:'COBA LAGI',cancelText:'SMART EDGE',onOk:()=>eRunRealAI(mode),onCancel:()=>eRunSmartEdge()});};
+      img.onerror=()=>{URL.revokeObjectURL(url);throw new Error('PNG hasil AI tidak dapat dibaca.');};
       img.src=url;
     }catch(err){
       set(0,'Gagal memproses.');
