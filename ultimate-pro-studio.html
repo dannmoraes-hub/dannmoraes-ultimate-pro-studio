@@ -643,19 +643,14 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
             reader.onload = (ev) => {
                 const img = new Image();
                 img.onload = () => {
-                    // KEEP ORIGINAL PIXEL DIMENSIONS. The previous version resized
-                    // every Remove BG upload to a maximum of 1000px, which caused
-                    // downloaded PNGs to become smaller than the user's original.
-                    const safe = new Image();
-                    safe.onload = () => {
-                        imgExcisionOriginal = safe;
-                        eReset();
-                        document.getElementById('phExcision').style.display = 'none';
-                        canvasExcision.style.display = 'block';
-                        document.getElementById('ctrlExcision').style.display = 'flex';
-                        showToast(`Siap potong offline! ${safe.naturalWidth}×${safe.naturalHeight}px`, "success");
-                    };
-                    safe.src = ev.target.result;
+                    // Keep the original pixel dimensions. CSS may scale the preview,
+                    // but the editing/download canvas must stay at the source resolution.
+                    imgExcisionOriginal = img;
+                    eReset();
+                    document.getElementById('phExcision').style.display = 'none';
+                    canvasExcision.style.display = 'block';
+                    document.getElementById('ctrlExcision').style.display = 'flex';
+                    showToast(`Siap potong offline! ${img.width}×${img.height}px`, "success");
                 };
                 img.src = ev.target.result;
             };
@@ -796,12 +791,9 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
             if(!imgExcisionOriginal) return;
             showToast("Merender PNG...", "loading");
             setTimeout(() => {
-                // Normal PNG = exact edited canvas dimensions. HD = optional 2× export.
-                // CSS/display size never affects the downloaded pixel dimensions.
                 const ec = document.createElement('canvas'), ecx = ec.getContext('2d'), scale = isHD ? 2 : 1;
                 ec.width = excisionBuffer.width * scale; ec.height = excisionBuffer.height * scale;
-                ecx.imageSmoothingEnabled = true;
-                ecx.drawImage(excisionBuffer, 0, 0, ec.width, ec.height);
+                ecx.imageSmoothingEnabled = true; ecx.drawImage(excisionBuffer, 0, 0);
                 ec.toBlob(b => {
                     const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `DannMoraes_cut_${Date.now()}.png`; a.click(); 
                     showToast("PNG berhasil disimpan! 🎉", "success");
@@ -883,8 +875,26 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
     set(8,'Menyiapkan foto...');
     showToast('Mengunggah foto ke AI Online...','loading');
     try{
-      // The editor already keeps images reasonably small for mobile; this also avoids oversized function requests.
-      const source=imgExcisionOriginal.src; // Original-resolution source; no frontend downscaling.
+      // Keep the editor at the original resolution. Only the transport copy is
+      // compressed to WebP so the JSON request stays below Netlify's payload limit.
+      const makeTransportImage = async () => {
+        const sourceCanvas=document.createElement('canvas');
+        sourceCanvas.width=imgExcisionOriginal.naturalWidth || imgExcisionOriginal.width;
+        sourceCanvas.height=imgExcisionOriginal.naturalHeight || imgExcisionOriginal.height;
+        const sourceCtx=sourceCanvas.getContext('2d',{alpha:true});
+        sourceCtx.drawImage(imgExcisionOriginal,0,0);
+        const qualities=[0.82,0.72,0.62,0.52,0.42];
+        let dataUrl='';
+        for(const q of qualities){
+          dataUrl=sourceCanvas.toDataURL('image/webp',q);
+          if(dataUrl.length <= 5_300_000) break;
+        }
+        // A final JPEG fallback is intentionally avoided because transparency is
+        // irrelevant to the input but WebP is smaller and keeps the same pixels.
+        return dataUrl;
+      };
+      const source=await makeTransportImage();
+      if(!source || source.length > 5_500_000) throw new Error('Foto terlalu besar untuk dikirim ke AI Online. Coba kompres foto sedikit lalu ulangi.');
       set(22,'Mengirim foto ke server aman...');
       const response=await fetch('/.netlify/functions/remove-bg',{
         method:'POST',
@@ -911,7 +921,7 @@ canvas{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 14
         eUpdateBuffer();window.__dmHasImage=true;set(100,'Selesai — PNG transparan siap di-download.'); document.getElementById('aiDownloadBox')?.style.removeProperty('display');
         showToast('AI Online selesai! Background berhasil dihapus.','success');
       };
-      img.onerror=()=>{URL.revokeObjectURL(url);throw new Error('PNG hasil AI tidak dapat dibaca.');};
+      img.onerror=()=>{URL.revokeObjectURL(url);set(0,'Gagal membaca hasil AI.');showCustomPopup('AI TIDAK SELESAI','<strong>Server mengirim hasil gambar yang tidak dapat dibaca.</strong><br><br>Coba lagi atau gunakan <b>SMART EDGE</b>.',{okText:'COBA LAGI',cancelText:'SMART EDGE',onOk:()=>eRunRealAI(mode),onCancel:()=>eRunSmartEdge()});};
       img.src=url;
     }catch(err){
       set(0,'Gagal memproses.');
